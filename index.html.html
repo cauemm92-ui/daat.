@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAAT — Pré-Diagnóstico</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #1e84c3;
+    --blue-light: #3a9fd4;
+    --blue-glow: rgba(30,132,195,0.15);
+    --dark: #1d1d1d;
+    --gray-bg: #c8c8d0;
+    --gray-mid: #9898a8;
+    --white: #ffffff;
+    --card-bg: rgba(255,255,255,0.55);
+    --border: rgba(29,29,29,0.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--gray-bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(29,29,29,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(29,29,29,0.07) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* BLUE GLOW */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -120px;
+    right: -120px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(30,132,195,0.18) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* HEADER */
+  .header {
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    color: var(--dark);
+    letter-spacing: -0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    margin-bottom: 28px;
+  }
+
+  .logo span { color: var(--blue); }
+
+  .header-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(30,132,195,0.1);
+    border: 1px solid rgba(30,132,195,0.25);
+    color: var(--blue);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 2px;
+    margin-bottom: 16px;
+  }
+
+  .header-tag::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--blue);
+    border-radius: 50%;
+    animation: pulse 2s ease infinite;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(28px, 5vw, 40px);
+    color: var(--dark);
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--blue);
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: rgba(29,29,29,0.6);
+    line-height: 1.6;
+    font-weight: 300;
+    max-width: 480px;
+  }
+
+  /* PROGRESS */
+  .progress-bar {
+    height: 2px;
+    background: rgba(29,29,29,0.1);
+    border-radius: 2px;
+    margin: 32px 0;
+    overflow: hidden;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--blue);
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: rgba(29,29,29,0.4);
+    letter-spacing: 1px;
+  }
+
+  /* FORM CARD */
+  .form-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 8px;
+    padding: 36px;
+    box-shadow: 0 4px 32px rgba(29,29,29,0.08);
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  /* STEPS */
+  .step { display: none; }
+  .step.active { display: block; animation: stepIn 0.4s ease both; }
+
+  .step-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--dark);
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+  }
+
+  .step-desc {
+    font-size: 13px;
+    color: rgba(29,29,29,0.5);
+    margin-bottom: 28px;
+    font-weight: 300;
+  }
+
+  /* FIELDS */
+  .field { margin-bottom: 20px; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(29,29,29,0.6);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  select,
+  textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--dark);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue-glow);
+  }
+
+  textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231d1d1d' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  /* RADIO / CHECKBOX OPTIONS */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .options-grid.cols-1 { grid-template-columns: 1fr; }
+
+  .option-item {
+    position: relative;
+  }
+
+  .option-item input[type="radio"],
+  .option-item input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .option-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13.5px;
+    color: rgba(29,29,29,0.75);
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .option-label::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    border: 1.5px solid rgba(29,29,29,0.2);
+    border-radius: 50%;
+    transition: all 0.2s;
+    background: white;
+  }
+
+  .option-item input[type="checkbox"] + .option-label::before {
+    border-radius: 3px;
+  }
+
+  .option-item input:checked + .option-label {
+    border-color: var(--blue);
+    background: rgba(30,132,195,0.06);
+    color: var(--dark);
+  }
+
+  .option-item input:checked + .option-label::before {
+    background: var(--blue);
+    border-color: var(--blue);
+    box-shadow: inset 0 0 0 3px white;
+  }
+
+  .option-item input[type="checkbox"]:checked + .option-label::before {
+    background: var(--blue);
+    border-color: var(--blue);
+    box-shadow: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 10 8'%3E%3Cpath d='M1 4l3 3 5-6' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  /* ROW */
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width: 480px) { .row { grid-template-columns: 1fr; } .options-grid { grid-template-columns: 1fr; } }
+
+  /* RANGE SLIDER */
+  .range-wrapper { position: relative; padding-bottom: 24px; }
+  input[type="range"] {
+    width: 100%;
+    height: 4px;
+    background: rgba(29,29,29,0.1);
+    border-radius: 4px;
+    outline: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--blue);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(30,132,195,0.4);
+    transition: transform 0.2s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 11px;
+    color: rgba(29,29,29,0.4);
+    font-family: 'DM Mono', monospace;
+  }
+  .range-value {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--blue);
+    font-weight: 500;
+  }
+
+  /* NAVIGATION */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    outline: none;
+  }
+
+  .btn-primary {
+    background: var(--blue);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--blue-light);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(30,132,195,0.3);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: rgba(29,29,29,0.5);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover {
+    color: var(--dark);
+    border-color: rgba(29,29,29,0.25);
+  }
+
+  .btn svg { width: 16px; height: 16px; }
+
+  /* SUCCESS */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 20px 0;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(30,132,195,0.1);
+    border: 2px solid var(--blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+  }
+
+  .success-icon svg { width: 28px; height: 28px; color: var(--blue); }
+
+  .success-screen h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    color: var(--dark);
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+
+  .success-screen p {
+    font-size: 14px;
+    color: rgba(29,29,29,0.55);
+    line-height: 1.7;
+    max-width: 380px;
+    margin: 0 auto 28px;
+  }
+
+  .summary-box {
+    background: rgba(30,132,195,0.06);
+    border: 1px solid rgba(30,132,195,0.2);
+    border-radius: 6px;
+    padding: 20px;
+    text-align: left;
+    margin-bottom: 24px;
+  }
+
+  .summary-box h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 12px;
+  }
+
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(29,29,29,0.06);
+    color: rgba(29,29,29,0.7);
+  }
+
+  .summary-item:last-child { border-bottom: none; }
+  .summary-item strong { color: var(--dark); font-weight: 500; }
+
+  /* ANIMATIONS */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes stepIn {
+    from { opacity: 0; transform: translateX(12px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* FOOTER */
+  .form-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 11px;
+    color: rgba(29,29,29,0.35);
+    font-family: 'DM Mono', monospace;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">DAAT<span>.</span></div>
+    <div class="header-tag">Pré-Diagnóstico Gratuito</div>
+    <h1>Seus dados têm respostas.<br><em>Vamos encontrá-las.</em></h1>
+    <p class="subtitle">Preencha em 3 minutos. Com base nas suas respostas, nossa equipe chega à call já com um olhar direcionado para o seu negócio.</p>
+  </div>
+
+  <!-- PROGRESS -->
+  <div style="animation: fadeUp 0.6s 0.15s ease both;">
+    <div class="progress-label">
+      <span id="step-label">ETAPA 1 DE 4</span>
+      <span id="step-pct">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+
+    <!-- STEP 1: Sobre a empresa -->
+    <div class="step active" id="step-1">
+      <div class="step-title">Sobre a sua empresa</div>
+      <div class="step-desc">Contexto básico para entender o seu negócio antes da call.</div>
+
+      <div class="row">
+        <div class="field">
+          <label>Nome da empresa *</label>
+          <input type="text" id="empresa" placeholder="Ex: Comercial Silva Ltda">
+        </div>
+        <div class="field">
+          <label>Seu nome *</label>
+          <input type="text" id="nome" placeholder="Ex: João Silva">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>E-mail *</label>
+          <input type="email" id="email" placeholder="seu@email.com.br">
+        </div>
+        <div class="field">
+          <label>WhatsApp</label>
+          <input type="tel" id="telefone" placeholder="(11) 9 9999-9999">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Segmento de atuação *</label>
+        <select id="segmento">
+          <option value="" disabled selected>Selecione o segmento</option>
+          <option>Varejo / E-commerce</option>
+          <option>Alimentação / Food Service</option>
+          <option>Saúde e Bem-estar</option>
+          <option>Serviços Profissionais</option>
+          <option>Indústria / Manufatura</option>
+          <option>Educação</option>
+          <option>Construção / Imobiliário</option>
+          <option>Tecnologia</option>
+          <option>Outro</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Número de colaboradores</label>
+        <div class="options-grid">
+          <div class="option-item">
+            <input type="radio" name="tamanho" id="t1" value="1–5">
+            <label class="option-label" for="t1">1 – 5 pessoas</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="tamanho" id="t2" value="6–20">
+            <label class="option-label" for="t2">6 – 20 pessoas</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="tamanho" id="t3" value="21–50">
+            <label class="option-label" for="t3">21 – 50 pessoas</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="tamanho" id="t4" value="50+">
+            <label class="option-label" for="t4">Mais de 50</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Dados -->
+    <div class="step" id="step-2">
+      <div class="step-title">Dados que você já tem</div>
+      <div class="step-desc">Queremos entender o que já existe antes de sugerir qualquer coisa.</div>
+
+      <div class="field">
+        <label>Quais dados sua empresa coleta hoje? (pode marcar vários)</label>
+        <div class="options-grid">
+          <div class="option-item">
+            <input type="checkbox" id="d1" value="Vendas">
+            <label class="option-label" for="d1">Vendas / Faturamento</label>
+          </div>
+          <div class="option-item">
+            <input type="checkbox" id="d2" value="Clientes">
+            <label class="option-label" for="d2">Base de clientes / CRM</label>
+          </div>
+          <div class="option-item">
+            <input type="checkbox" id="d3" value="Estoque">
+            <label class="option-label" for="d3">Estoque / Compras</label>
+          </div>
+          <div class="option-item">
+            <input type="checkbox" id="d4" value="Financeiro">
+            <label class="option-label" for="d4">Financeiro / Caixa</label>
+          </div>
+          <div class="option-item">
+            <input type="checkbox" id="d5" value="Marketing">
+            <label class="option-label" for="d5">Marketing / Mídia paga</label>
+          </div>
+          <div class="option-item">
+            <input type="checkbox" id="d6" value="Operações">
+            <label class="option-label" for="d6">Operações / Produção</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Onde esses dados estão armazenados?</label>
+        <div class="options-grid cols-1">
+          <div class="option-item">
+            <input type="radio" name="armazenamento" id="a1" value="Planilhas Excel/Google">
+            <label class="option-label" for="a1">Planilhas (Excel / Google Sheets)</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="armazenamento" id="a2" value="ERP / Sistema">
+            <label class="option-label" for="a2">ERP ou sistema de gestão</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="armazenamento" id="a3" value="Misto">
+            <label class="option-label" for="a3">Mistura dos dois</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="armazenamento" id="a4" value="Nenhum">
+            <label class="option-label" for="a4">Ainda não organizado</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Dores -->
+    <div class="step" id="step-3">
+      <div class="step-title">Seus maiores desafios</div>
+      <div class="step-desc">Isso nos ajuda a chegar à call com insights relevantes para o seu contexto.</div>
+
+      <div class="field">
+        <label>Qual é sua principal dificuldade hoje?</label>
+        <div class="options-grid cols-1">
+          <div class="option-item">
+            <input type="radio" name="dor" id="dr1" value="Não sei de onde vem o faturamento">
+            <label class="option-label" for="dr1">Não sei de onde vem meu faturamento principal</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="dor" id="dr2" value="Perco clientes sem saber o motivo">
+            <label class="option-label" for="dr2">Perco clientes e não sei o motivo</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="dor" id="dr3" value="Tomo decisões no feeling">
+            <label class="option-label" for="dr3">Tomo decisões no feeling, sem base em dados</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="dor" id="dr4" value="Dados desorganizados">
+            <label class="option-label" for="dr4">Meus dados estão desorganizados e espalhados</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="dor" id="dr5" value="Não sei o que analisar">
+            <label class="option-label" for="dr5">Tenho dados mas não sei o que analisar</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Contexto adicional (opcional)</label>
+        <textarea id="contexto" placeholder="Descreva brevemente a situação atual da sua empresa ou algum desafio específico que gostaria de explorar na call..."></textarea>
+      </div>
+    </div>
+
+    <!-- STEP 4: Expectativas -->
+    <div class="step" id="step-4">
+      <div class="step-title">Expectativas e agenda</div>
+      <div class="step-desc">Últimas perguntas para alinharmos a call ao que você realmente precisa.</div>
+
+      <div class="field">
+        <label>O que você espera sair da call de diagnóstico?</label>
+        <div class="options-grid cols-1">
+          <div class="option-item">
+            <input type="radio" name="expectativa" id="e1" value="Entender se análise de dados faz sentido para mim">
+            <label class="option-label" for="e1">Entender se análise de dados faz sentido para mim agora</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="expectativa" id="e2" value="Ver exemplos práticos para meu segmento">
+            <label class="option-label" for="e2">Ver exemplos práticos do que dá para fazer no meu segmento</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="expectativa" id="e3" value="Receber uma proposta">
+            <label class="option-label" for="e3">Receber uma proposta concreta de serviço</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="expectativa" id="e4" value="Tirar dúvidas específicas">
+            <label class="option-label" for="e4">Tirar dúvidas sobre um problema específico</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Melhor horário para a call</label>
+        <div class="options-grid">
+          <div class="option-item">
+            <input type="radio" name="horario" id="h1" value="Manhã (8h–12h)">
+            <label class="option-label" for="h1">Manhã (8h – 12h)</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="horario" id="h2" value="Almoço (12h–14h)">
+            <label class="option-label" for="h2">Almoço (12h – 14h)</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="horario" id="h3" value="Tarde (14h–18h)">
+            <label class="option-label" for="h3">Tarde (14h – 18h)</label>
+          </div>
+          <div class="option-item">
+            <input type="radio" name="horario" id="h4" value="Noite (18h–20h)">
+            <label class="option-label" for="h4">Noite (18h – 20h)</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Nível de urgência</label>
+        <div class="range-wrapper">
+          <input type="range" id="urgencia" min="1" max="5" value="3" oninput="updateRange(this)">
+          <div class="range-labels">
+            <span>Explorando</span>
+            <span>Urgente</span>
+          </div>
+          <div class="range-value" id="urgencia-label">Médio</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-screen" id="success">
+      <div class="success-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
+      <h2>Diagnóstico agendado!</h2>
+      <p>Recebemos suas informações. Nossa equipe entrará em contato em até 24h para confirmar o horário da call.</p>
+      <div class="summary-box">
+        <h3>Resumo do envio</h3>
+        <div id="summary-content"></div>
+      </div>
+      <p style="font-size:13px; color: rgba(29,29,29,0.45);">Dúvidas? Fale pelo WhatsApp ou e-mail:<br><strong style="color:var(--blue)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b1d2dedfc5d0c5def1d5d0d0c59fc5d4d2d99fd3c3">[email&#160;protected]</a></strong></p>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="nav" id="nav-buttons">
+      <button class="btn btn-ghost" id="btn-back" onclick="prevStep()" style="visibility:hidden">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Voltar
+      </button>
+      <button class="btn btn-primary" id="btn-next" onclick="nextStep()">
+        Continuar
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="form-footer">DAAT. · <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="07636666732964686a6275646e666b47606a666e6b2964686a">[email&#160;protected]</a> · daat.tech</div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  let currentStep = 1;
+  const totalSteps = 4;
+
+  const urgencyLabels = ['', 'Baixo', 'Pouco urgente', 'Médio', 'Urgente', 'Muito urgente'];
+
+  function updateRange(el) {
+    document.getElementById('urgencia-label').textContent = urgencyLabels[el.value];
+  }
+
+  function updateProgress() {
+    const pct = Math.round(((currentStep - 1) / totalSteps) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('step-label').textContent = `ETAPA ${currentStep} DE ${totalSteps}`;
+    document.getElementById('step-pct').textContent = pct + '%';
+    document.getElementById('btn-back').style.visibility = currentStep > 1 ? 'visible' : 'hidden';
+    document.getElementById('btn-next').innerHTML = currentStep === totalSteps
+      ? `Enviar diagnóstico <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`
+      : `Continuar <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`;
+  }
+
+  function nextStep() {
+    if (currentStep < totalSteps) {
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      currentStep++;
+      document.getElementById(`step-${currentStep}`).classList.add('active');
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      submitForm();
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 1) {
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      currentStep--;
+      document.getElementById(`step-${currentStep}`).classList.add('active');
+      updateProgress();
+    }
+  }
+
+  async function submitForm() {
+    // Collect all data
+    const empresa  = document.getElementById('empresa').value || '—';
+    const nome     = document.getElementById('nome').value || '—';
+    const email    = document.getElementById('email').value || '—';
+    const telefone = document.getElementById('telefone').value || '—';
+    const segmento = document.getElementById('segmento').value || '—';
+    const tamanho  = document.querySelector('input[name="tamanho"]:checked');
+    const armazenamento = document.querySelector('input[name="armazenamento"]:checked');
+    const dor      = document.querySelector('input[name="dor"]:checked');
+    const horario  = document.querySelector('input[name="horario"]:checked');
+    const expectativa = document.querySelector('input[name="expectativa"]:checked');
+    const contexto = document.getElementById('contexto').value || '—';
+    const urgencia = urgencyLabels[document.getElementById('urgencia').value];
+
+    // Checkboxes de dados coletados
+    const dadosChecks = ['d1','d2','d3','d4','d5','d6'];
+    const dados = dadosChecks
+      .filter(id => document.getElementById(id).checked)
+      .map(id => document.getElementById(id).value)
+      .join(', ') || '—';
+
+    const payload = {
+      empresa, nome, email, telefone, segmento,
+      tamanho: tamanho ? tamanho.value : '—',
+      dados,
+      armazenamento: armazenamento ? armazenamento.value : '—',
+      dor: dor ? dor.value : '—',
+      contexto,
+      expectativa: expectativa ? expectativa.value : '—',
+      horario: horario ? horario.value : '—',
+      urgencia
+    };
+
+    // Disable button and show loading
+    const btnNext = document.getElementById('btn-next');
+    btnNext.disabled = true;
+    btnNext.innerHTML = `<svg style="width:16px;height:16px;animation:spin 1s linear infinite" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Enviando...`;
+
+    // XMLHttpRequest — compativel com iOS/Safari
+    await new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'https://script.google.com/macros/s/AKfycbyNVqVN3JXPiRvZviRaR_XVn54QEtYwaPaVtzskL6MHE42mHinneStdP--1_O-iT-raAw/exec', true);
+      xhr.setRequestHeader('Content-Type', 'text/plain');
+      xhr.onload = resolve;
+      xhr.onerror = resolve; // no-cors — trata erro como sucesso
+      xhr.send(JSON.stringify(payload));
+    });
+
+    // Summary
+    const items = [
+      ['Empresa', empresa],
+      ['Contato', nome],
+      ['E-mail', email],
+      ['Segmento', segmento],
+      ['Dados coletados', dados],
+      ['Principal dor', dor ? dor.value : '—'],
+      ['Melhor horário', horario ? horario.value : '—'],
+      ['Urgência', urgencia],
+    ];
+
+    document.getElementById('summary-content').innerHTML = items.map(([k,v]) =>
+      `<div class="summary-item"><span>${k}</span><strong>${v}</strong></div>`
+    ).join('');
+
+    // Show success
+    for (let i = 1; i <= totalSteps; i++) {
+      const s = document.getElementById(`step-${i}`);
+      if (s) s.classList.remove('active');
+    }
+    document.getElementById('success').style.display = 'block';
+    document.getElementById('nav-buttons').style.display = 'none';
+
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('step-label').textContent = 'CONCLUÍDO';
+    document.getElementById('step-pct').textContent = '100%';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>
